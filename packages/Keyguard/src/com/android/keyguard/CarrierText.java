@@ -34,14 +34,11 @@ import android.util.AttributeSet;
 import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
-import android.os.SystemProperties;
 
 import com.android.internal.telephony.IccCardConstants;
 import com.android.internal.telephony.IccCardConstants.State;
 import com.android.internal.telephony.TelephonyIntents;
-import com.android.internal.telephony.PhoneConstants;
 import com.android.settingslib.WirelessUtils;
-import android.telephony.TelephonyManager;
 
 public class CarrierText extends TextView {
     private static final boolean DEBUG = KeyguardConstants.DEBUG;
@@ -54,8 +51,6 @@ public class CarrierText extends TextView {
     private KeyguardUpdateMonitor mKeyguardUpdateMonitor;
 
     private WifiManager mWifiManager;
-
-    private boolean[] mSimErrorState = new boolean[TelephonyManager.getDefault().getPhoneCount()];
 
     private KeyguardUpdateMonitorCallback mCallback = new KeyguardUpdateMonitorCallback() {
         @Override
@@ -70,22 +65,6 @@ public class CarrierText extends TextView {
         public void onStartedWakingUp() {
             setSelected(true);
         };
-
-        public void onSimStateChanged(int subId, int slotId, IccCardConstants.State simState) {
-            if (slotId < 0) {
-                Log.d(TAG, "onSimStateChanged() - slotId invalid: " + slotId);
-                return;
-            }
-
-            Log.d(TAG,"onSimStateChanged: " + getStatusForIccState(simState));
-            if (getStatusForIccState(simState) == StatusMode.SimIoError) {
-                mSimErrorState[slotId] = true;
-                updateCarrierText();
-            } else if (mSimErrorState[slotId]) {
-                mSimErrorState[slotId] = false;
-                updateCarrierText();
-            }
-        };
     };
     /**
      * The status of this lock screen. Primarily used for widgets on LockScreen.
@@ -98,8 +77,7 @@ public class CarrierText extends TextView {
         SimPukLocked, // SIM card is PUK locked because SIM entered wrong too many times
         SimLocked, // SIM card is currently locked
         SimPermDisabled, // SIM card is permanently disabled due to PUK unlock failure
-        SimNotReady, // SIM is not ready yet. May never be on devices w/o a SIM.
-        SimIoError; //The sim card is faulty
+        SimNotReady; // SIM is not ready yet. May never be on devices w/o a SIM.
     }
 
     public CarrierText(Context context) {
@@ -123,35 +101,6 @@ public class CarrierText extends TextView {
         mWifiManager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
     }
 
-    /**
-     * Checks if there are faulty cards. Adds the text depending on the slot of the card
-     * @param text: current carrier text based on the sim state
-     * @param noSims: whether a valid sim card is inserted
-     * @return text
-    */
-    private CharSequence updateCarrierTextWithSimIoError(CharSequence text, boolean noSims) {
-        final CharSequence carrier = "";
-        CharSequence carrierTextForSimState = getCarrierTextForSimState(
-            IccCardConstants.State.CARD_IO_ERROR, carrier);
-        for (int index = 0; index < mSimErrorState.length; index++) {
-            if (mSimErrorState[index]) {
-                // In the case when no sim cards are detected but a faulty card is inserted
-                // overwrite the text and only show "Invalid card"
-                if (noSims) {
-                    return concatenate(carrierTextForSimState,
-                        getContext().getText(com.android.internal.R.string.emergency_calls_only));
-                } else if (index == 0) {
-                    // prepend "Invalid card" when faulty card is inserted in slot 0
-                    text = concatenate(carrierTextForSimState, text);
-                } else {
-                    // concatenate "Invalid card" when faulty card is inserted in slot 1
-                    text = concatenate(text, carrierTextForSimState);
-                }
-            }
-        }
-        return text;
-    }
-
     protected void updateCarrierText() {
         boolean allSimsMissing = true;
         boolean anySimReadyAndInService = false;
@@ -160,24 +109,6 @@ public class CarrierText extends TextView {
         List<SubscriptionInfo> subs = mKeyguardUpdateMonitor.getSubscriptionInfo(false);
         final int N = subs.size();
         if (DEBUG) Log.d(TAG, "updateCarrierText(): " + N);
-        // If the Subscription Infos are not available and if any of the sims are not
-        // in SIM_STATE_ABSENT,set displayText as "NO SERVICE".
-        // displayText will be overrided after the Subscription infos are available and
-        // displayText is set according to the SIM Status.
-        if (N == 0) {
-                 boolean isSimAbsent = false;
-                 for (int i = 0; i < TelephonyManager.getDefault().getSimCount(); i++) {
-                      if (TelephonyManager.getDefault().getSimState(i)
-                            == TelephonyManager.SIM_STATE_ABSENT) {
-                            isSimAbsent = true;
-                            break;
-                      }
-            }
-            if (!isSimAbsent) {
-                allSimsMissing = false;
-                displayText = getContext().getString(R.string.keyguard_carrier_default);
-            }
-        }
         for (int i = 0; i < N; i++) {
             int subId = subs.get(i).getSubscriptionId();
             State simState = mKeyguardUpdateMonitor.getSimState(subId);
@@ -205,38 +136,6 @@ public class CarrierText extends TextView {
                         anySimReadyAndInService = true;
                     }
                 }
-            }
-        }
-        /*
-         * In the case where there is only one sim inserted in a multisim device, if
-         * the voice registration service state is reported as 12 (no service with emergency)
-         * for at least one of the sim concatenate the sim state with "Emergency calls only"
-         */
-        if (N < TelephonyManager.getDefault().getPhoneCount() &&
-                 mKeyguardUpdateMonitor.isEmergencyOnly()) {
-            int presentSubId = mKeyguardUpdateMonitor.getPresentSubId();
-
-            if (DEBUG) {
-                Log.d(TAG, " Present sim - sub id: " + presentSubId);
-            }
-            if (presentSubId != -1) {
-                CharSequence text =
-                        getContext().getText(com.android.internal.R.string.emergency_calls_only);
-                Intent spnUpdatedIntent = getContext().registerReceiver(null,
-                        new IntentFilter(TelephonyIntents.SPN_STRINGS_UPDATED_ACTION));
-                if (spnUpdatedIntent != null) {
-                    String spn = "";
-                    if (spnUpdatedIntent.getBooleanExtra(TelephonyIntents.EXTRA_SHOW_SPN, false) &&
-                            spnUpdatedIntent.getIntExtra(PhoneConstants.SUBSCRIPTION_KEY, -1) ==
-                                presentSubId) {
-                        spn = spnUpdatedIntent.getStringExtra(TelephonyIntents.EXTRA_SPN);
-                        if (!spn.equals(text.toString())) {
-                            text = concatenate(text, spn);
-                        }
-                    }
-                }
-                displayText = getCarrierTextForSimState(
-                        mKeyguardUpdateMonitor.getSimState(presentSubId), text);
             }
         }
         if (allSimsMissing) {
@@ -280,7 +179,6 @@ public class CarrierText extends TextView {
             }
         }
 
-        displayText = updateCarrierTextWithSimIoError(displayText, allSimsMissing);
         // APM (airplane mode) != no carrier state. There are carrier services
         // (e.g. WFC = Wi-Fi calling) which may operate in APM.
         if (!anySimReadyAndInService && WirelessUtils.isAirplaneModeOn(mContext)) {
@@ -372,11 +270,6 @@ public class CarrierText extends TextView {
                         getContext().getText(R.string.keyguard_sim_puk_locked_message),
                         text);
                 break;
-            case SimIoError:
-                carrierText = makeCarrierStringOnEmergencyCapable(
-                        getContext().getText(R.string.lockscreen_sim_error_message_short),
-                        text);
-                break;
         }
 
         return carrierText;
@@ -426,8 +319,6 @@ public class CarrierText extends TextView {
                 return StatusMode.SimPermDisabled;
             case UNKNOWN:
                 return StatusMode.SimMissing;
-            case CARD_IO_ERROR:
-                return StatusMode.SimIoError;
         }
         return StatusMode.SimMissing;
     }
