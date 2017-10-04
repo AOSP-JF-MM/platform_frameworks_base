@@ -20,4 +20,9 @@
     <java-symbol type="array" name="config_disabledComponents" />
     <java-symbol type="array" name="config_forceEnabledComponents" />
 
+    <!-- Whether device has alternative doze package -->
+    <java-symbol type="bool" name="config_alt_ambient_display"/>
+
+    <!-- Whether to enable doze always on -->
+    <java-symbol type="bool" name="config_enableDozeAlwaysOn"/>
 </resources>
