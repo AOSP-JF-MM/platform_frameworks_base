@@ -28,4 +28,10 @@
     <java-symbol type="string" name="reboot_progress" />
     <java-symbol type="string" name="reboot_to_recovery_title" />
     <java-symbol type="string" name="reboot_recovery_progress" />
+
+    <!-- Whether device has alternative doze package -->
+    <java-symbol type="bool" name="config_alt_ambient_display"/>
+
+    <!-- Whether to enable doze always on -->
+    <java-symbol type="bool" name="config_enableDozeAlwaysOn"/>
 </resources>
