@@ -414,6 +414,10 @@ public class NotificationColorUtil {
                 : findContrastColor(color, bg, true, 3);
     }
 
+    public static int ensureLargeTextContrastOnDark(int color, int bg) {
+        return findContrastColorAgainstDark(color, bg, true, 3);
+    }
+
     /**
      * Finds a text color with sufficient contrast over bg that has the same or darker hue as the
      * original color, depending on the value of {@code isBgDarker}.
@@ -424,6 +428,10 @@ public class NotificationColorUtil {
         return isBgDarker
                 ? findContrastColorAgainstDark(color, bg, true, 4.5)
                 : findContrastColor(color, bg, true, 4.5);
+    }
+
+    public static int ensureTextContrastOnDark(int color, int bg) {
+        return findContrastColorAgainstDark(color, bg, true, 4.5);
     }
 
     /** Finds a background color for a text view with given text color and hint text color, that
@@ -481,8 +489,13 @@ public class NotificationColorUtil {
                 com.android.internal.R.color.notification_action_list);
 
         int color = resolvedColor;
-        color = NotificationColorUtil.ensureLargeTextContrast(color, actionBg, isDark);
-        color = NotificationColorUtil.ensureTextContrast(color, backgroundColor, isDark);
+        if (context.getResources().getBoolean(R.bool.config_useDarkBgNotificationIconTextTinting)) {
+            color = NotificationColorUtil.ensureLargeTextContrastOnDark(color, actionBg, isDark);
+            color = NotificationColorUtil.ensureTextContrastOnDark(color, backgroundColor, isDark);
+        } else {
+            color = NotificationColorUtil.ensureLargeTextContrast(color, actionBg, isDark);
+            color = NotificationColorUtil.ensureTextContrast(color, backgroundColor, isDark);
+        }
 
         if (color != resolvedColor) {
             if (DEBUG){
