@@ -36,10 +36,12 @@ PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)material/alarms/Wag.ogg:system/media/audio/alarms/Wag.ogg \
     $(LOCAL_PATH)material/effects/audio_end.ogg:system/media/audio/ui/audio_end.ogg \
     $(LOCAL_PATH)material/effects/audio_initiate.ogg:system/media/audio/ui/audio_initiate.ogg \
+    $(LOCAL_PATH)material/effects/BatteryPlugged.ogg:system/media/audio/ui/BatteryPlugged.ogg \
     $(LOCAL_PATH)material/effects/camera_click.ogg:system/media/audio/ui/camera_click.ogg \
     $(LOCAL_PATH)material/effects/camera_focus.ogg:system/media/audio/ui/camera_focus.ogg \
     $(LOCAL_PATH)material/effects/Dock.ogg:system/media/audio/ui/Dock.ogg \
     $(LOCAL_PATH)material/effects/Effect_Tick.ogg:system/media/audio/ui/Effect_Tick.ogg \
+    $(LOCAL_PATH)material/effects/InCallNotification.ogg:system/media/audio/ui/InCallNotification.ogg \
     $(LOCAL_PATH)material/effects/KeypressDelete.ogg:system/media/audio/ui/KeypressDelete.ogg \
     $(LOCAL_PATH)material/effects/KeypressInvalid.ogg:system/media/audio/ui/KeypressInvalid.ogg \
     $(LOCAL_PATH)material/effects/KeypressReturn.ogg:system/media/audio/ui/KeypressReturn.ogg \
