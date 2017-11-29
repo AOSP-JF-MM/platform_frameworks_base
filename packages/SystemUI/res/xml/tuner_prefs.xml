@@ -121,7 +121,7 @@
 
     </PreferenceScreen>
 
-    <PreferenceScreen
+    <!-- <PreferenceScreen
       android:key="doze"
       android:title="@string/tuner_doze">
 
@@ -130,7 +130,7 @@
           android:title="@string/tuner_doze_always_on"
           sysui:defValue="false" />
 
-    </PreferenceScreen>
+    </PreferenceScreen> -->
 
     <Preference
         android:key="nav_bar"
