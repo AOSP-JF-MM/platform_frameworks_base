@@ -490,8 +490,8 @@ public class NotificationColorUtil {
 
         int color = resolvedColor;
         if (context.getResources().getBoolean(R.bool.config_useDarkBgNotificationIconTextTinting)) {
-            color = NotificationColorUtil.ensureLargeTextContrastOnDark(color, actionBg, isDark);
-            color = NotificationColorUtil.ensureTextContrastOnDark(color, backgroundColor, isDark);
+            color = NotificationColorUtil.ensureLargeTextContrastOnDark(color, actionBg);
+            color = NotificationColorUtil.ensureTextContrastOnDark(color, backgroundColor);
         } else {
             color = NotificationColorUtil.ensureLargeTextContrast(color, actionBg, isDark);
             color = NotificationColorUtil.ensureTextContrast(color, backgroundColor, isDark);
